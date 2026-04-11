@@ -3,7 +3,6 @@ import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useEffect, useState } from "react";
 import {
-  DEFAULT_SETTINGS,
   SETTINGS_EVENT,
   clampKeyScale,
   loadSettings,
@@ -58,19 +57,8 @@ export default function SettingsView() {
   return (
     <main className="settings-shell">
       <section className="settings-card">
-        <header
-          className="settings-dragbar"
-          data-tauri-drag-region
-        >
-          <span className="settings-title">Keyviewer</span>
-          <button
-            className="settings-close settings-no-drag"
-            type="button"
-            onClick={() => appWindow.close().catch(() => {})}
-            aria-label="Close settings"
-          >
-            ×
-          </button>
+        <header className="settings-dragbar" data-tauri-drag-region>
+          <span className="settings-title">settings</span>
         </header>
 
         <div className="settings-body">
@@ -136,14 +124,6 @@ export default function SettingsView() {
               <span className="settings-unit">%</span>
             </div>
           </label>
-
-          <button
-            className="settings-reset settings-no-drag"
-            type="button"
-            onClick={() => updateSettings(DEFAULT_SETTINGS)}
-          >
-            기본값으로 복원
-          </button>
         </div>
       </section>
     </main>
