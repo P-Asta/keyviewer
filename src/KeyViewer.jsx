@@ -17,10 +17,29 @@ const BASE_KEYS = [
 const EXTRA_KEYS = [
   { id: "e", match: "KeyE", alt: "E", className: "kv-key--e", setting: "showE" },
   { id: "g", match: "KeyG", alt: "G", className: "kv-key--g", setting: "showG" },
+  {
+    id: "shift",
+    match: ["ShiftLeft", "ShiftRight"],
+    alt: "Shift",
+    className: "kv-key--shift",
+    setting: "showShift",
+  },
 ];
 
 function matchesPayload(payload, match) {
+  if (Array.isArray(match)) {
+    return match.some((value) => payload === value || payload?.includes(value));
+  }
+
   return payload === match || payload?.includes(match);
+}
+
+function matchesCode(code, match) {
+  if (Array.isArray(match)) {
+    return match.includes(code);
+  }
+
+  return match === code;
 }
 
 function imagePath(id, pressed) {
@@ -35,15 +54,17 @@ export default function KeyViewer() {
   const [settings, setSettings] = useState(() => loadSettings());
 
   useEffect(() => {
+    const allKeys = [...BASE_KEYS, ...EXTRA_KEYS];
+
     const onKeyDown = (event) => {
-      const key = [...BASE_KEYS, ...EXTRA_KEYS].find((item) => matchesPayload(event.payload, item.match));
+      const key = allKeys.find((item) => matchesPayload(event.payload, item.match));
       if (!key) return;
 
       setPressedKeys((current) => ({ ...current, [key.id]: true }));
     };
 
     const onKeyUp = (event) => {
-      const key = [...BASE_KEYS, ...EXTRA_KEYS].find((item) => matchesPayload(event.payload, item.match));
+      const key = allKeys.find((item) => matchesPayload(event.payload, item.match));
       if (!key) return;
 
       setPressedKeys((current) => {
@@ -65,15 +86,17 @@ export default function KeyViewer() {
   }, []);
 
   useEffect(() => {
+    const allKeys = [...BASE_KEYS, ...EXTRA_KEYS];
+
     const handleKeyDown = (event) => {
-      const key = [...BASE_KEYS, ...EXTRA_KEYS].find((item) => item.match === event.code);
+      const key = allKeys.find((item) => matchesCode(event.code, item.match));
       if (!key) return;
 
       setPressedKeys((current) => ({ ...current, [key.id]: true }));
     };
 
     const handleKeyUp = (event) => {
-      const key = [...BASE_KEYS, ...EXTRA_KEYS].find((item) => item.match === event.code);
+      const key = allKeys.find((item) => matchesCode(event.code, item.match));
       if (!key) return;
 
       setPressedKeys((current) => {
@@ -125,18 +148,23 @@ export default function KeyViewer() {
   }, []);
 
   const scale = settings.keyScale ?? DEFAULT_SETTINGS.keyScale;
-  const extraKeys = EXTRA_KEYS.filter((key) => settings[key.setting]);
+  const sideKeys = EXTRA_KEYS.filter((key) => settings[key.setting]);
+  const sideTopKeys = sideKeys.filter((key) => key.id !== "shift");
+  const hasShift = sideKeys.some((key) => key.id === "shift");
   const keySize = Math.round(64 * scale);
   const gap = Math.max(8, Math.round(8 * scale));
   const padding = Math.max(6, Math.round(10 * scale));
   const middleWidth = keySize * 3 + gap * 2;
   const spaceWidth = middleWidth;
-  const extraGap = extraKeys.length > 0 ? gap * 2 : 0;
+  const extraGap = sideKeys.length > 0 ? gap * 2 : 0;
   const row2Y = keySize + gap;
   const row3Y = keySize * 2 + gap * 2;
-  const eX = spaceWidth + extraGap;
-  const gX = eX + keySize + gap;
-  const bottomWidth = extraKeys.length > 0 ? gX + keySize : spaceWidth;
+  const sideX = middleWidth + extraGap;
+  const shiftWidth = keySize * 2 + gap;
+  const sideTopWidth =
+    sideTopKeys.length > 0 ? keySize * sideTopKeys.length + gap * Math.max(0, sideTopKeys.length - 1) : 0;
+  const sideBlockWidth = hasShift ? Math.max(shiftWidth, sideTopWidth) : sideTopWidth;
+  const bottomWidth = sideKeys.length > 0 ? sideX + sideBlockWidth : spaceWidth;
   const shellWidth = Math.ceil(Math.max(middleWidth, bottomWidth) + padding * 2);
   const shellHeight = Math.ceil(keySize * 3 + gap * 2 + padding * 2);
   const positions = {
@@ -145,10 +173,25 @@ export default function KeyViewer() {
     s: { x: keySize + gap, y: row2Y, width: keySize },
     d: { x: (keySize + gap) * 2, y: row2Y, width: keySize },
     space: { x: 0, y: row3Y, width: spaceWidth },
-    e: { x: eX, y: row3Y, width: keySize },
-    g: { x: gX, y: row3Y, width: keySize },
   };
-  const visibleKeys = [...BASE_KEYS, ...extraKeys];
+
+  sideTopKeys.forEach((key, index) => {
+    positions[key.id] = {
+      x: sideX + index * (keySize + gap),
+      y: hasShift ? row2Y : row3Y,
+      width: keySize,
+    };
+  });
+
+  if (hasShift) {
+    positions.shift = {
+      x: sideX,
+      y: row3Y,
+      width: shiftWidth,
+    };
+  }
+
+  const visibleKeys = [...BASE_KEYS, ...sideKeys];
 
   useEffect(() => {
     invoke("resize_main_window", { width: shellWidth, height: shellHeight }).catch(() => {});

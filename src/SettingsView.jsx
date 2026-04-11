@@ -98,6 +98,18 @@ export default function SettingsView() {
             </button>
           </label>
 
+          <label className="settings-row">
+            <span className="settings-label">Shift 키 표시</span>
+            <button
+              className={`settings-toggle settings-no-drag ${settings.showShift ? "is-on" : ""}`}
+              type="button"
+              onClick={() => updateSettings({ showShift: !settings.showShift })}
+              aria-pressed={settings.showShift}
+            >
+              <span className="settings-toggle-thumb" />
+            </button>
+          </label>
+
           <label className="settings-stack">
             <span className="settings-label">키 크기</span>
             <div className="settings-scale-row">
