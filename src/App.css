@@ -1,0 +1,189 @@
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css");
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: transparent;
+  overflow: hidden;
+  font-family:
+    "Pretendard";
+}
+* {
+  box-sizing: border-box;
+}
+
+[data-tauri-drag-region],
+[data-tauri-drag-region] * {
+  app-region: drag;
+}
+
+img {
+  display: block;
+}
+
+.settings-no-drag,
+.settings-no-drag * {
+  app-region: no-drag;
+}
+
+.window-main,
+.window-main #root {
+  width: max-content;
+  height: max-content;
+}
+
+.kv-shell {
+  position: relative;
+  padding: var(--kv-padding, 10px);
+  background: transparent;
+}
+
+.kv-layout {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.kv-key {
+  position: absolute;
+  filter: none;
+}
+
+.kv-key-image {
+  width: 100%;
+  height: auto;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.settings-shell {
+  min-height: 100%;
+  padding: 12px;
+  background: transparent;
+}
+
+.settings-card {
+  width: 100%;
+  min-height: calc(100vh - 24px);
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(18, 18, 18, 0.94);
+  color: #f3f3f3;
+  overflow: hidden;
+}
+
+.settings-dragbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: move;
+  user-select: none;
+}
+
+.settings-title {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.settings-close {
+  border: 0;
+  background: transparent;
+  color: #f3f3f3;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.settings-body {
+  display: grid;
+  gap: 18px;
+  padding: 16px 14px 14px;
+}
+
+.settings-row,
+.settings-stack {
+  display: grid;
+  gap: 10px;
+}
+
+.settings-row {
+  grid-template-columns: 1fr auto;
+  align-items: center;
+}
+
+.settings-label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.settings-toggle {
+  width: 52px;
+  height: 30px;
+  padding: 3px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+
+.settings-toggle.is-on {
+  background: #32d583;
+}
+
+.settings-toggle-thumb {
+  display: block;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 120ms ease;
+}
+
+.settings-toggle.is-on .settings-toggle-thumb {
+  transform: translateX(22px);
+}
+
+.settings-scale-row {
+  display: grid;
+  grid-template-columns: 1fr 70px auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.settings-range,
+.settings-number {
+  width: 100%;
+}
+
+.settings-number {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  padding: 8px 10px;
+}
+
+.settings-unit {
+  font-size: 13px;
+  opacity: 0.8;
+}
+
+.settings-reset {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  padding: 10px 12px;
+  cursor: pointer;
+}

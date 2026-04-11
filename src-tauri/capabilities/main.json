@@ -1,0 +1,16 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "main",
+  "description": "Capability for the main keyviewer window",
+  "local": true,
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "core:webview:allow-create-webview-window",
+    "core:window:allow-create",
+    "opener:default",
+    "global-shortcut:allow-is-registered",
+    "global-shortcut:allow-register",
+    "global-shortcut:allow-unregister"
+  ]
+}
