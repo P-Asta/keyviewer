@@ -110,6 +110,18 @@ export default function SettingsView() {
             </button>
           </label>
 
+          <label className="settings-row">
+            <span className="settings-label">추가 키 좌우반전</span>
+            <button
+              className={`settings-toggle settings-no-drag ${settings.flipExtraKeys ? "is-on" : ""}`}
+              type="button"
+              onClick={() => updateSettings({ flipExtraKeys: !settings.flipExtraKeys })}
+              aria-pressed={settings.flipExtraKeys}
+            >
+              <span className="settings-toggle-thumb" />
+            </button>
+          </label>
+
           <label className="settings-stack">
             <span className="settings-label">키 크기</span>
             <div className="settings-scale-row">

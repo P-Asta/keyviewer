@@ -7,6 +7,7 @@ export const DEFAULT_SETTINGS = {
   showE: false,
   showG: false,
   showShift: false,
+  flipExtraKeys: false,
 };
 
 export function clampKeyScale(value) {
@@ -22,6 +23,7 @@ export function normalizeSettings(input = {}) {
     showE: Boolean(input.showE),
     showG: Boolean(input.showG),
     showShift: Boolean(input.showShift),
+    flipExtraKeys: Boolean(input.flipExtraKeys),
   };
 }
 

@@ -159,20 +159,21 @@ export default function KeyViewer() {
   const extraGap = sideKeys.length > 0 ? gap * 2 : 0;
   const row2Y = keySize + gap;
   const row3Y = keySize * 2 + gap * 2;
-  const sideX = middleWidth + extraGap;
   const shiftWidth = keySize * 2 + gap;
   const sideTopWidth =
     sideTopKeys.length > 0 ? keySize * sideTopKeys.length + gap * Math.max(0, sideTopKeys.length - 1) : 0;
   const sideBlockWidth = hasShift ? Math.max(shiftWidth, sideTopWidth) : sideTopWidth;
-  const bottomWidth = sideKeys.length > 0 ? sideX + sideBlockWidth : spaceWidth;
-  const shellWidth = Math.ceil(Math.max(middleWidth, bottomWidth) + padding * 2);
+  const mainBlockX = settings.flipExtraKeys && sideKeys.length > 0 ? sideBlockWidth + extraGap : 0;
+  const sideX = settings.flipExtraKeys ? 0 : middleWidth + extraGap;
+  const shellContentWidth = sideKeys.length > 0 ? middleWidth + extraGap + sideBlockWidth : middleWidth;
+  const shellWidth = Math.ceil(shellContentWidth + padding * 2);
   const shellHeight = Math.ceil(keySize * 3 + gap * 2 + padding * 2);
   const positions = {
-    w: { x: keySize + gap, y: 0, width: keySize },
-    a: { x: 0, y: row2Y, width: keySize },
-    s: { x: keySize + gap, y: row2Y, width: keySize },
-    d: { x: (keySize + gap) * 2, y: row2Y, width: keySize },
-    space: { x: 0, y: row3Y, width: spaceWidth },
+    w: { x: mainBlockX + keySize + gap, y: 0, width: keySize },
+    a: { x: mainBlockX, y: row2Y, width: keySize },
+    s: { x: mainBlockX + keySize + gap, y: row2Y, width: keySize },
+    d: { x: mainBlockX + (keySize + gap) * 2, y: row2Y, width: keySize },
+    space: { x: mainBlockX, y: row3Y, width: spaceWidth },
   };
 
   sideTopKeys.forEach((key, index) => {

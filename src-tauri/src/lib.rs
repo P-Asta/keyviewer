@@ -51,9 +51,9 @@ fn show_settings_window(app: &AppHandle) -> tauri::Result<()> {
 
     WebviewWindowBuilder::new(app, "settings", WebviewUrl::App("index.html?window=settings".into()))
         .title("Keyviewer Settings")
-        .inner_size(380.0, 430.0)
-        .min_inner_size(380.0, 430.0)
-        .max_inner_size(380.0, 430.0)
+        .inner_size(380.0, 470.0)
+        .min_inner_size(380.0, 470.0)
+        .max_inner_size(380.0, 470.0)
         .resizable(false)
         .maximizable(false)
         .minimizable(false)
