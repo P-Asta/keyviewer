@@ -5,7 +5,8 @@ import KeyViewer from "./KeyViewer";
 import SettingsView from "./SettingsView";
 
 function App() {
-  const isSettingsWindow = new URLSearchParams(window.location.search).get("window") === "settings";
+  const windowType = new URLSearchParams(window.location.search).get("window");
+  const isSettingsWindow = windowType === "settings";
 
   useEffect(() => {
     document.body.classList.toggle("window-settings", isSettingsWindow);
@@ -16,7 +17,8 @@ function App() {
     };
   }, [isSettingsWindow]);
 
-  return isSettingsWindow ? <SettingsView /> : <KeyViewer />;
+  if (isSettingsWindow) return <SettingsView />;
+  return <KeyViewer />;
 }
 
 export default App;
