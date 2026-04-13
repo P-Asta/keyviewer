@@ -15,7 +15,7 @@ import {
   saveSettings,
 } from "./settings";
 
-const MAIN_SETTINGS_HEIGHT = 625;
+const MAIN_SETTINGS_HEIGHT = 690;
 const BINDINGS_SETTINGS_HEIGHT = 645;
 
 export default function SettingsView() {
@@ -341,6 +341,14 @@ export default function SettingsView() {
                   }}
                 >
                   키 변경
+                </button>
+
+                <button
+                  className="settings-action settings-action-danger settings-no-drag"
+                  type="button"
+                  onClick={() => invoke("exit_app").catch(() => {})}
+                >
+                  키뷰어 종료
                 </button>
               </section>
             </section>

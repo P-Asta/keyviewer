@@ -358,6 +358,16 @@ img {
   text-align: center;
 }
 
+.settings-action-danger {
+  border-color: rgba(255, 107, 107, 0.36);
+  background: rgba(255, 107, 107, 0.12);
+  color: #ffd2d2;
+}
+
+.settings-action-danger:hover {
+  background: rgba(255, 107, 107, 0.18);
+}
+
 .settings-hint {
   margin: 0;
   line-height: 1.4;

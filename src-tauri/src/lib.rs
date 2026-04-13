@@ -88,6 +88,11 @@ fn focus_main_window(app: AppHandle) -> Result<(), String> {
     window.set_focus().map_err(|e| e.to_string())
 }
 
+#[tauri::command]
+fn exit_app(app: AppHandle) {
+    app.exit(0);
+}
+
 fn show_or_focus_window(
     app: &AppHandle,
     label: &str,
@@ -201,7 +206,8 @@ pub fn run() {
             set_main_always_on_top,
             set_main_lock_position,
             resize_settings_window,
-            focus_main_window
+            focus_main_window,
+            exit_app
         ])
         .on_window_event(|window, event| {
             if window.label() == "settings" && matches!(event, WindowEvent::Focused(false)) {
