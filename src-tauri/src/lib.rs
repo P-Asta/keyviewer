@@ -1,8 +1,20 @@
-use rdev::{listen, Button, Event, EventType};
+use rdev::{listen, Button, Event, EventType, Key};
+use serde::{Deserialize, Serialize};
+use std::fs;
 use std::time::Duration;
-use tauri::{AppHandle, Emitter, LogicalSize, Manager, WebviewUrl, WebviewWindowBuilder, WindowEvent};
+use tauri::{
+    AppHandle, Emitter, LogicalSize, Manager, PhysicalPosition, WebviewUrl, WebviewWindow,
+    WebviewWindowBuilder, WindowEvent,
+};
 use tauri_plugin_global_shortcut::ShortcutState;
-use tauri_plugin_window_state::Builder as WindowStateBuilder;
+
+const MAIN_POSITION_FILE: &str = "keyviewer-position.json";
+
+#[derive(Clone, Copy, Deserialize, Serialize)]
+struct SavedMainPosition {
+    x: i32,
+    y: i32,
+}
 
 #[tauri::command]
 fn resize_main_window(app: AppHandle, width: f64, height: f64) -> Result<(), String> {
@@ -54,11 +66,10 @@ fn set_main_lock_position(app: AppHandle, lock_position: bool) -> Result<(), Str
 }
 
 #[tauri::command]
-fn resize_settings_window(app: AppHandle, height: f64) -> Result<(), String> {
+fn resize_settings_window(app: AppHandle, width: f64, height: f64) -> Result<(), String> {
     let window = app
         .get_webview_window("settings")
         .ok_or_else(|| "settings window not found".to_string())?;
-    let width = 420.0;
 
     window
         .set_min_size(Option::<LogicalSize<f64>>::None)
@@ -90,7 +101,51 @@ fn focus_main_window(app: AppHandle) -> Result<(), String> {
 
 #[tauri::command]
 fn exit_app(app: AppHandle) {
+    save_main_window_position(&app);
     app.exit(0);
+}
+
+fn main_position_path(app: &AppHandle) -> Option<std::path::PathBuf> {
+    app.path().app_config_dir().ok().map(|dir| dir.join(MAIN_POSITION_FILE))
+}
+
+fn save_main_window_position(app: &AppHandle) {
+    let Some(window) = app.get_webview_window("main") else {
+        return;
+    };
+    let Ok(position) = window.outer_position() else {
+        return;
+    };
+    let Some(path) = main_position_path(app) else {
+        return;
+    };
+
+    if let Some(parent) = path.parent() {
+        let _ = fs::create_dir_all(parent);
+    }
+
+    let position = SavedMainPosition {
+        x: position.x,
+        y: position.y,
+    };
+
+    if let Ok(payload) = serde_json::to_vec_pretty(&position) {
+        let _ = fs::write(path, payload);
+    }
+}
+
+fn restore_main_window_position(app: &AppHandle, window: &WebviewWindow) {
+    let Some(path) = main_position_path(app) else {
+        return;
+    };
+    let Ok(payload) = fs::read(path) else {
+        return;
+    };
+    let Ok(position) = serde_json::from_slice::<SavedMainPosition>(&payload) else {
+        return;
+    };
+
+    let _ = window.set_position(PhysicalPosition::new(position.x, position.y));
 }
 
 fn show_or_focus_window(
@@ -149,8 +204,8 @@ fn show_settings_window(app: &AppHandle) -> tauri::Result<()> {
         "settings",
         "Keyviewer Settings",
         "index.html?window=settings",
-        420.0,
-        625.0,
+        500.0,
+        760.0,
     )
 }
 
@@ -165,15 +220,29 @@ fn normalize_mouse_button(button: Button) -> String {
     }
 }
 
+fn normalize_key_name(key: Key) -> String {
+    match key {
+        Key::ShiftLeft | Key::ShiftRight => "Shift".to_string(),
+        Key::ControlLeft | Key::ControlRight => "Control".to_string(),
+        Key::Unknown(16) | Key::Unknown(160) | Key::Unknown(161) => "Shift".to_string(),
+        Key::Unknown(17) | Key::Unknown(25) | Key::Unknown(162) | Key::Unknown(163) => {
+            "Control".to_string()
+        }
+        Key::Alt => "AltLeft".to_string(),
+        Key::AltGr => "AltRight".to_string(),
+        _ => format!("{:?}", key),
+    }
+}
+
 fn start_key_listener(app: AppHandle) {
     std::thread::spawn(move || {
         let callback = move |event: Event| {
             match event.event_type {
                 EventType::KeyPress(key) => {
-                    let _ = app.emit("key-down", format!("{:?}", key));
+                    let _ = app.emit("key-down", normalize_key_name(key));
                 }
                 EventType::KeyRelease(key) => {
-                    let _ = app.emit("key-up", format!("{:?}", key));
+                    let _ = app.emit("key-up", normalize_key_name(key));
                 }
                 EventType::ButtonPress(button) => {
                     let _ = app.emit("mouse-down", normalize_mouse_button(button));
@@ -191,14 +260,60 @@ fn start_key_listener(app: AppHandle) {
     });
 }
 
+#[cfg(windows)]
+fn start_modifier_polling(app: AppHandle) {
+    use winapi::um::winuser::{
+        GetAsyncKeyState, VK_CONTROL, VK_LCONTROL, VK_LSHIFT, VK_RCONTROL, VK_RSHIFT, VK_SHIFT,
+    };
+    const VK_HANJA: i32 = 0x19;
+
+    std::thread::spawn(move || {
+        let mut ctrl_pressed = false;
+        let mut shift_pressed = false;
+
+        loop {
+            let next_ctrl_pressed = unsafe {
+                GetAsyncKeyState(VK_CONTROL) < 0
+                    || GetAsyncKeyState(VK_LCONTROL) < 0
+                    || GetAsyncKeyState(VK_RCONTROL) < 0
+                    || GetAsyncKeyState(VK_HANJA) < 0
+            };
+            let next_shift_pressed = unsafe {
+                GetAsyncKeyState(VK_SHIFT) < 0
+                    || GetAsyncKeyState(VK_LSHIFT) < 0
+                    || GetAsyncKeyState(VK_RSHIFT) < 0
+            };
+
+            if next_ctrl_pressed != ctrl_pressed {
+                ctrl_pressed = next_ctrl_pressed;
+                let event = if next_ctrl_pressed { "key-down" } else { "key-up" };
+                let _ = app.emit(event, "Control");
+            }
+
+            if next_shift_pressed != shift_pressed {
+                shift_pressed = next_shift_pressed;
+                let event = if next_shift_pressed { "key-down" } else { "key-up" };
+                let _ = app.emit(event, "Shift");
+            }
+
+            std::thread::sleep(Duration::from_millis(12));
+        }
+    });
+}
+
+#[cfg(not(windows))]
+fn start_modifier_polling(_app: AppHandle) {}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .setup(|app| {
             if let Some(window) = app.get_webview_window("main") {
                 let _ = window.set_skip_taskbar(true);
+                restore_main_window_position(app.handle(), &window);
             }
             start_key_listener(app.handle().clone());
+            start_modifier_polling(app.handle().clone());
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -213,6 +328,14 @@ pub fn run() {
             if window.label() == "settings" && matches!(event, WindowEvent::Focused(false)) {
                 let _ = window.hide();
             }
+
+            if window.label() == "main" && matches!(event, WindowEvent::CloseRequested { .. }) {
+                save_main_window_position(window.app_handle());
+            }
+
+            if window.label() == "main" && matches!(event, WindowEvent::Moved(_)) {
+                save_main_window_position(window.app_handle());
+            }
         })
         .plugin(
             tauri_plugin_global_shortcut::Builder::new()
@@ -225,7 +348,6 @@ pub fn run() {
                 })
                 .build(),
         )
-        .plugin(WindowStateBuilder::default().with_denylist(&["settings"]).build())
         .plugin(tauri_plugin_opener::init())
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

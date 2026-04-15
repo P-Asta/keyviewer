@@ -12,11 +12,16 @@ import {
   formatBindingToken,
   getMouseBindingToken,
   loadSettings,
+  normalizeBindingToken,
   saveSettings,
 } from "./settings";
 
-const MAIN_SETTINGS_HEIGHT = 690;
-const BINDINGS_SETTINGS_HEIGHT = 645;
+const SETTINGS_WIDTH = 500;
+const MAIN_SETTINGS_HEIGHT = 585;
+const LEGACY_MAIN_SETTINGS_HEIGHT = 535;
+const BINDINGS_SETTINGS_HEIGHT = 440;
+const LEGACY_BINDINGS_SETTINGS_HEIGHT = 500;
+const LEGACY_BINDING_IDS = new Set(["w", "a", "s", "d", "space", "e", "g", "shift", "ctrl"]);
 
 export default function SettingsView() {
   const appWindow = getCurrentWindow();
@@ -69,9 +74,17 @@ export default function SettingsView() {
   }, [appWindow]);
 
   useEffect(() => {
-    const targetHeight = page === "bindings" ? BINDINGS_SETTINGS_HEIGHT : MAIN_SETTINGS_HEIGHT;
-    invoke("resize_settings_window", { height: targetHeight }).catch(() => {});
-  }, [page]);
+    const targetHeight =
+      page === "bindings"
+        ? settings.legacyKeyUi
+          ? LEGACY_BINDINGS_SETTINGS_HEIGHT
+          : BINDINGS_SETTINGS_HEIGHT
+        : settings.legacyKeyUi
+          ? LEGACY_MAIN_SETTINGS_HEIGHT
+          : MAIN_SETTINGS_HEIGHT;
+
+    invoke("resize_settings_window", { width: SETTINGS_WIDTH, height: targetHeight }).catch(() => {});
+  }, [page, settings.legacyKeyUi]);
 
   const updateSettings = async (patch) => {
     const next = saveSettings({ ...settingsRef.current, ...patch });
@@ -96,7 +109,7 @@ export default function SettingsView() {
       ...settingsRef.current,
       keyBindings: {
         ...settingsRef.current.keyBindings,
-        [target]: token,
+        [target]: normalizeBindingToken(target, token, token),
       },
     });
 
@@ -179,6 +192,9 @@ export default function SettingsView() {
     () => VIEWER_BINDINGS.find((binding) => binding.id === bindingTarget)?.label ?? null,
     [bindingTarget],
   );
+  const visibleBindings = settings.legacyKeyUi
+    ? VIEWER_BINDINGS.filter((binding) => LEGACY_BINDING_IDS.has(binding.id))
+    : VIEWER_BINDINGS;
 
   return (
     <main className="settings-shell">
@@ -210,6 +226,18 @@ export default function SettingsView() {
             <section className="settings-page-panel" aria-hidden={page !== "main"}>
               <section className="settings-page settings-page-inner settings-page-main">
                 <label className="settings-row">
+                  <span className="settings-label">레거시 키 UI</span>
+                  <button
+                    className={`settings-toggle settings-no-drag ${settings.legacyKeyUi ? "is-on" : ""}`}
+                    type="button"
+                    onClick={() => updateSettings({ legacyKeyUi: !settings.legacyKeyUi })}
+                    aria-pressed={settings.legacyKeyUi}
+                  >
+                    <span className="settings-toggle-thumb" />
+                  </button>
+                </label>
+
+                <label className="settings-row">
                   <span className="settings-label">앱 상단 고정</span>
                   <button
                     className={`settings-toggle settings-no-drag ${settings.alwaysOnTop ? "is-on" : ""}`}
@@ -233,6 +261,34 @@ export default function SettingsView() {
                   </button>
                 </label>
 
+                {!settings.legacyKeyUi && (
+                  <label className="settings-row">
+                    <span className="settings-label">Tab 키 표시</span>
+                    <button
+                      className={`settings-toggle settings-no-drag ${settings.showTab ? "is-on" : ""}`}
+                      type="button"
+                      onClick={() => updateSettings({ showTab: !settings.showTab })}
+                      aria-pressed={settings.showTab}
+                    >
+                      <span className="settings-toggle-thumb" />
+                    </button>
+                  </label>
+                )}
+
+                {!settings.legacyKeyUi && (
+                  <label className="settings-row">
+                    <span className="settings-label">Q 키 표시</span>
+                    <button
+                      className={`settings-toggle settings-no-drag ${settings.showQ ? "is-on" : ""}`}
+                      type="button"
+                      onClick={() => updateSettings({ showQ: !settings.showQ })}
+                      aria-pressed={settings.showQ}
+                    >
+                      <span className="settings-toggle-thumb" />
+                    </button>
+                  </label>
+                )}
+
                 <label className="settings-row">
                   <span className="settings-label">E 키 표시</span>
                   <button
@@ -244,6 +300,20 @@ export default function SettingsView() {
                     <span className="settings-toggle-thumb" />
                   </button>
                 </label>
+
+                {!settings.legacyKeyUi && (
+                  <label className="settings-row">
+                    <span className="settings-label">T 키 표시</span>
+                    <button
+                      className={`settings-toggle settings-no-drag ${settings.showT ? "is-on" : ""}`}
+                      type="button"
+                      onClick={() => updateSettings({ showT: !settings.showT })}
+                      aria-pressed={settings.showT}
+                    >
+                      <span className="settings-toggle-thumb" />
+                    </button>
+                  </label>
+                )}
 
                 <label className="settings-row">
                   <span className="settings-label">G 키 표시</span>
@@ -258,12 +328,12 @@ export default function SettingsView() {
                 </label>
 
                 <label className="settings-row">
-                  <span className="settings-label">C 키 표시</span>
+                  <span className="settings-label">Ctrl 키 표시</span>
                   <button
-                    className={`settings-toggle settings-no-drag ${settings.showC ? "is-on" : ""}`}
+                    className={`settings-toggle settings-no-drag ${settings.showCtrl ? "is-on" : ""}`}
                     type="button"
-                    onClick={() => updateSettings({ showC: !settings.showC })}
-                    aria-pressed={settings.showC}
+                    onClick={() => updateSettings({ showCtrl: !settings.showCtrl })}
+                    aria-pressed={settings.showCtrl}
                   >
                     <span className="settings-toggle-thumb" />
                   </button>
@@ -294,7 +364,7 @@ export default function SettingsView() {
                 </label>
 
                 <label className="settings-row">
-                  <span className="settings-label">추가 키 좌우반전</span>
+                  <span className="settings-label">특수키 좌우반전</span>
                   <button
                     className={`settings-toggle settings-no-drag ${settings.flipExtraKeys ? "is-on" : ""}`}
                     type="button"
@@ -363,7 +433,7 @@ export default function SettingsView() {
                 </div>
 
                 <div className="settings-binding-list">
-                  {VIEWER_BINDINGS.map((binding) => {
+                  {visibleBindings.map((binding) => {
                     const isWaiting = bindingTarget === binding.id;
 
                     return (

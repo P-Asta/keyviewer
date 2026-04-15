@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 env:
-  APP_NAME: "hq-launcher"
+  APP_NAME: "keyviewer"
 
 permissions:
   contents: write
