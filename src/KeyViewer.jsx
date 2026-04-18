@@ -534,7 +534,13 @@ export default function KeyViewer() {
                 width: `${position.width}px`,
               }}
             >
-              <img className="kv-key-image" src={imagePath(key.id, pressed)} alt={key.alt} />
+              <img
+                className="kv-key-image"
+                src={imagePath(key.id, pressed)}
+                alt={key.alt}
+                draggable={false}
+                onDragStart={(event) => event.preventDefault()}
+              />
             </div>
           );
         })}
